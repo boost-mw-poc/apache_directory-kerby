@@ -171,7 +171,7 @@ public abstract class Asn1Simple<T> extends AbstractAsn1Type<T> {
             case BOOLEAN:
                 return new Asn1Boolean();
             case ENUMERATED:
-                return null;
+                return new Asn1IntegerEnumerated();
             case GENERALIZED_TIME:
                 return new Asn1GeneralizedTime();
             case GENERAL_STRING:
