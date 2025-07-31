@@ -89,8 +89,8 @@ public class CredCacheOutputStream extends KrbOutputStream {
     }
 
     public void writeAddress(HostAddress address) throws IOException {
-        write(address.getAddrType().getValue());
-        write(address.getAddress().length);
+        writeShort(address.getAddrType().getValue());
+        writeInt(address.getAddress().length);
         write(address.getAddress(), 0,
               address.getAddress().length);
     }
@@ -99,9 +99,11 @@ public class CredCacheOutputStream extends KrbOutputStream {
         if (authData == null) {
             writeInt(0);
         } else {
-            for (AuthorizationDataEntry entry : authData.getElements()) {
-                write(entry.getAuthzType().getValue());
-                write(entry.getAuthzData().length);
+            List<AuthorizationDataEntry> entries = authData.getElements();
+            writeInt(entries.size());
+            for (AuthorizationDataEntry entry : entries) {
+                writeShort(entry.getAuthzType().getValue());
+                writeInt(entry.getAuthzData().length);
                 write(entry.getAuthzData());
             }
         }
