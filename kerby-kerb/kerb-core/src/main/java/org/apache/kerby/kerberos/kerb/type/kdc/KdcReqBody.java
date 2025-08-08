@@ -97,7 +97,7 @@ public class KdcReqBody extends KrbSequenceType {
             new ExplicitField(KdcReqBodyField.NONCE, Asn1Integer.class),
             new ExplicitField(KdcReqBodyField.ETYPE, KrbIntegers.class),
             new ExplicitField(KdcReqBodyField.ADDRESSES, HostAddresses.class),
-            new ExplicitField(KdcReqBodyField.ENC_AUTHORIZATION_DATA, AuthorizationData.class),
+            new ExplicitField(KdcReqBodyField.ENC_AUTHORIZATION_DATA, EncryptedData.class),
             new ExplicitField(KdcReqBodyField.ADDITIONAL_TICKETS, Tickets.class)
     };
 
