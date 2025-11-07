@@ -132,8 +132,8 @@
               <exclude>**/.checkstyle</exclude>
               <!-- BIN files -->
               <exclude>**/bin/**/*</exclude>
-              <!-- The IP clearance XML doc -->
-              <exclude>docs/kerby-ip-clearance.xml</exclude>
+              <!-- docs -->
+              <exclude>docs/**</exclude>
               <!-- The resources files -->
               <exclude>**/src/test/resources/**/*</exclude>
               <exclude>**/licenses/**</exclude>
