@@ -17,7 +17,7 @@
   under the License.
 -->
 [![Build Status](https://ci-builds.apache.org/job/Directory/job/dir-kerby-jdk8//badge/icon?subject=Build)](https://ci-builds.apache.org/job/Directory/job/dir-kerby-jdk8/)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.kerby/kerby-all/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.kerby/kerby-all/)
+[![Maven Central](https://maven-badges.sml.io/maven-central/org.apache.kerby/kerby-all/badge.svg)](https://maven-badges.sml.io/maven-central/org.apache.kerby/kerby-all/)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/apache/directory-kerby/badge)](https://api.securityscorecards.dev/projects/github.com/apache/directory-kerby)
 
 
