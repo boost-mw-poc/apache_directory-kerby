@@ -24,7 +24,7 @@
 Apache Kerby
 ============
 
-Apache Kerby, as an [Apache Directory](http://directory.apache.org) sub project, is a Java Kerberos binding. It provides a rich, intuitive and interoperable implementation, library, KDC and various facilities that integrates PKI, OTP and token (OAuth2) as desired in modern environments such as cloud, Hadoop and mobile.
+Apache Kerby, as an [Apache Directory](https://directory.apache.org) sub project, is a Java Kerberos binding. It provides a rich, intuitive and interoperable implementation, library, KDC and various facilities that integrates PKI, OTP and token (OAuth2) as desired in modern environments such as cloud, Hadoop and mobile.
 
 ![](https://github.com/apache/directory-kerby/blob/trunk/docs/logo.png)
 
@@ -131,7 +131,7 @@ A standalone KDC server that can integrate various identity backends including:
 ### Dependency
 - The core part is ensured to only depend on the JRE and SLF4J. Every external dependency is taken carefully and maintained separately.
 - [Nimbus JOSE + JWT](http://connect2id.com/products/nimbus-jose-jwt), needed by token-provider and TokenPreauth mechanism.
-- [Netty](http://netty.io/), needed by netty based KDC server.
+- [Netty](https://netty.io/), needed by netty based KDC server.
 - [Zookeeper](https://zookeeper.apache.org/), needed by zookeeper identity backend.
 
 ### How to use library
@@ -185,4 +185,4 @@ Apache License V2.0
 - Kerby Developers List: kerby@directory.apache.org [Subscribe](kerby-subscribe@directory.apache.org)
 
 ### Downloads
-- [Release 2.1.0](https://directory.apache.org/kerby/download/download-sources.html)
+- [Release 2.1.1](https://directory.apache.org/kerby/download/download-sources.html)
