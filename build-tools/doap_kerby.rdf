@@ -21,8 +21,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-  <Project rdf:about="https://directory.apache.org/studio/">
-    <created>2007-05-04</created>
+  <Project rdf:about="https://directory.apache.org/kerby/">
+    <created>2014-12-31</created>
     <license rdf:resource="https://spdx.org/licenses/Apache-2.0" />
     <name>Apache Kerby</name>
     <homepage rdf:resource="https://directory.apache.org/kerby/" />
