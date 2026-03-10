@@ -94,13 +94,14 @@ public class PreauthHandler {
         }
     }
 
-    public void verify(KdcRequest kdcRequest, PaData paData) throws KrbException {
+    public boolean verify(KdcRequest kdcRequest, PaData paData) throws KrbException {
         for (PaDataEntry paEntry : paData.getElements()) {
             PreauthHandle handle = findHandle(kdcRequest, paEntry.getPaDataType());
-            if (handle != null) {
-                handle.verify(kdcRequest, paEntry);
+            if (handle != null && handle.verify(kdcRequest, paEntry)) {
+                return true;
             }
         }
+        return false;
     }
 
     public void providePaData(KdcRequest kdcRequest, PaData paData) {
