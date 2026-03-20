@@ -42,8 +42,8 @@ public class PreauthHandle {
         preauth.provideEdata(kdcRequest, requestContext, outPaData);
     }
 
-    public void verify(KdcRequest kdcRequest, PaDataEntry paData) throws KrbException {
-        preauth.verify(kdcRequest, requestContext, paData);
+    public boolean verify(KdcRequest kdcRequest, PaDataEntry paData) throws KrbException {
+        return preauth.verify(kdcRequest, requestContext, paData);
     }
 
     public void providePaData(KdcRequest kdcRequest, PaData paData) {
