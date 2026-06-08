@@ -96,6 +96,14 @@ public class TokenTest {
         setAudience((JwtTokenDecoder) tokenDecoder, auds);
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        // Unsigned tokens are rejected by default
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+        Assertions.assertThat(token2).isNull();
+
+        // Now allow unsigned tokens
+        tokenDecoder.setRequireSignedTokens(false);
+        token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
         Assertions.assertThat(token2.getIssuer()).isEqualTo(ISSUER);
     }
@@ -112,6 +120,14 @@ public class TokenTest {
         setAudience((JwtTokenDecoder) tokenDecoder, auds);
 
         AuthToken token2 = tokenDecoder.decodeFromBytes(tokenStr);
+        // Unsigned tokens are rejected by default
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+
+        // Now allow unsigned tokens
+        tokenDecoder.setRequireSignedTokens(false);
+        token2 = tokenDecoder.decodeFromBytes(tokenStr);
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
         Assertions.assertThat(token2.getIssuer()).isEqualTo(ISSUER);
     }
@@ -127,6 +143,9 @@ public class TokenTest {
 
         String tokenStr = tokenEncoder.encodeAsString(authToken);
         Assertions.assertThat(tokenStr).isNotNull();
+
+        // Now allow unsigned tokens
+        tokenDecoder.setRequireSignedTokens(false);
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
@@ -153,6 +172,9 @@ public class TokenTest {
 
         String tokenStr = tokenEncoder.encodeAsString(authToken);
         Assertions.assertThat(tokenStr).isNotNull();
+
+        // Now allow unsigned tokens
+        tokenDecoder.setRequireSignedTokens(false);
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
@@ -185,6 +207,7 @@ public class TokenTest {
         Assertions.assertThat(tokenStr).isNotNull();
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
         Assertions.assertThat(token2.getIssuer()).isEqualTo(ISSUER);
     }
@@ -208,6 +231,7 @@ public class TokenTest {
         Assertions.assertThat(tokenStr).isNotNull();
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
         Assertions.assertThat(token2.getIssuer()).isEqualTo(ISSUER);
 
@@ -215,8 +239,9 @@ public class TokenTest {
         secretKey = keyGenerator.generateKey().getEncoded();
         ((JwtTokenDecoder) tokenDecoder).setVerifyKey(secretKey);
 
-       token2 = tokenDecoder.decodeFromString(tokenStr);
-       Assertions.assertThat(token2).isNull();
+        token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
     }
 
     @Test
@@ -257,6 +282,7 @@ public class TokenTest {
         Assertions.assertThat(tokenStr).isNotNull();
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
         Assertions.assertThat(token2.getSubject()).isEqualTo(SUBJECT);
         Assertions.assertThat(token2.getIssuer()).isEqualTo(ISSUER);
     }
@@ -279,6 +305,7 @@ public class TokenTest {
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
         Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
     }
 
     @Test
@@ -298,6 +325,7 @@ public class TokenTest {
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
         Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
     }
 
     @Test
@@ -317,6 +345,7 @@ public class TokenTest {
 
         AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
         Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
     }
 
     private void setEncryptKey(JwtTokenEncoder encoder, JwtTokenDecoder decoder) throws NoSuchAlgorithmException {

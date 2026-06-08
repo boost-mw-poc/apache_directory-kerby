@@ -38,8 +38,8 @@ import org.apache.kerby.kerberos.kerb.provider.TokenEncoder;
  * }
  */
 public class KrbToken extends KrbTokenBase implements AuthToken {
-    private static TokenEncoder tokenEncoder;
-    private static TokenDecoder tokenDecoder;
+    private TokenEncoder tokenEncoder;
+    private TokenDecoder tokenDecoder;
 
     private AuthToken innerToken = null;
 
@@ -93,7 +93,14 @@ public class KrbToken extends KrbTokenBase implements AuthToken {
     public void decode(Asn1ParseResult parseResult) throws IOException {
         super.decode(parseResult);
         if (getTokenValue() != null) {
-            this.innerToken = getTokenDecoder(getTokenFormat()).decodeFromBytes(getTokenValue());
+            TokenDecoder decoder = getTokenDecoder(getTokenFormat());
+            // Allow unsigned JWTs here because this is not the original
+            // client-to-KDC token validation step. The KDC has already
+            // validated the external token and embedded its claims into the
+            // Kerberos ticket, whose integrity/authenticity is protected by
+            // Kerberos itself.
+            decoder.setRequireSignedTokens(false);
+            this.innerToken = decoder.decodeFromBytes(getTokenValue());
             setTokenType();
         }
     }
@@ -114,7 +121,7 @@ public class KrbToken extends KrbTokenBase implements AuthToken {
      * Get token encoder.
      * @return The token encoder
      */
-    protected static TokenEncoder getTokenEncoder(TokenFormat format) {
+    protected TokenEncoder getTokenEncoder(TokenFormat format) {
         if (tokenEncoder == null) {
             tokenEncoder = KrbRuntime.getTokenProvider(format.getName()).createTokenEncoder();
         }
@@ -125,7 +132,7 @@ public class KrbToken extends KrbTokenBase implements AuthToken {
      * Get token decoder.
      * @return The token decoder
      */
-    protected static TokenDecoder getTokenDecoder(TokenFormat format) {
+    protected TokenDecoder getTokenDecoder(TokenFormat format) {
         if (tokenDecoder == null) {
             tokenDecoder = KrbRuntime.getTokenProvider(format.getName()).createTokenDecoder();
         }

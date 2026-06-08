@@ -56,6 +56,7 @@ public class JwtTokenDecoder implements TokenDecoder {
     private Object verifyKey;
     private List<String> audiences = null;
     private boolean signed = false;
+    private boolean requireSignedTokens = true;
 
     /**
      * {@inheritDoc}
@@ -72,7 +73,8 @@ public class JwtTokenDecoder implements TokenDecoder {
      */
     @Override
     public AuthToken decodeFromString(String content) throws IOException {
-       JWT jwt = null;
+        signed = false;
+        JWT jwt = null;
         try {
             jwt = JWTParser.parse(content);
         } catch (ParseException e) {
@@ -82,6 +84,9 @@ public class JwtTokenDecoder implements TokenDecoder {
 
         // Check the JWT type
         if (jwt instanceof PlainJWT) {
+            if (requireSignedTokens) {
+                return null;
+            }
             PlainJWT plainObject = (PlainJWT) jwt;
             try {
 
@@ -110,6 +115,9 @@ public class JwtTokenDecoder implements TokenDecoder {
                     return null;
                 }
             } else {
+                if (requireSignedTokens) {
+                    return null;
+                }
                 try {
                     if (verifyToken(encryptedJWT)) {
                         return new JwtAuthToken(encryptedJWT.getJWTClaimsSet());
@@ -290,4 +298,13 @@ public class JwtTokenDecoder implements TokenDecoder {
     public boolean isSigned() {
         return signed;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setRequireSignedTokens(boolean requireSignedTokens) {
+        this.requireSignedTokens = requireSignedTokens;
+    }
+
 }
