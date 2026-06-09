@@ -31,6 +31,13 @@ import java.security.PublicKey;
 public interface TokenDecoder {
 
     /**
+     * Configure whether only signed tokens are accepted.
+     *
+     * @param requireSignedTokens true to reject unsigned tokens
+     */
+    void setRequireSignedTokens(boolean requireSignedTokens);
+
+    /**
      * Decode a token from a bytes array.
      * @param content The content
      * @return token

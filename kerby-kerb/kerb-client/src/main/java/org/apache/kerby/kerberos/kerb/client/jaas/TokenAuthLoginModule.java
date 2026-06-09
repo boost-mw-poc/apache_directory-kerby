@@ -25,7 +25,6 @@ import org.apache.kerby.kerberos.kerb.client.KrbClient;
 import org.apache.kerby.kerberos.kerb.client.KrbConfig;
 import org.apache.kerby.kerberos.kerb.client.KrbTokenClient;
 import org.apache.kerby.kerberos.kerb.common.PrivateKeyReader;
-import org.apache.kerby.kerberos.kerb.provider.TokenDecoder;
 import org.apache.kerby.kerberos.kerb.provider.TokenEncoder;
 import org.apache.kerby.kerberos.kerb.type.base.AuthToken;
 import org.apache.kerby.kerberos.kerb.type.base.KrbToken;
@@ -201,7 +200,7 @@ public class TokenAuthLoginModule implements LoginModule {
         LOG.info("\t\t[TokenAuthLoginModule]: Entering logout");
 
         if (subject.isReadOnly()) {
-            throw new LoginException("Subject is Readonly");
+            throwWith("Subject is Readonly");
         }
 
         for (Principal principal: subject.getPrincipals()) {
@@ -230,7 +229,7 @@ public class TokenAuthLoginModule implements LoginModule {
     private void validateConfiguration() throws LoginException {
 
         if (armorCache == null) {
-            throw new LoginException("An armor cache must be specified via the armorCache configuration option");
+            throwWith("An armor cache must be specified via the armorCache configuration option");
         }
 
         if (cCache == null) {
@@ -246,7 +245,7 @@ public class TokenAuthLoginModule implements LoginModule {
         }
 
         if (!error.isEmpty()) {
-            throw new LoginException(error);
+            throwWith(error);
         }
     }
 
@@ -254,7 +253,7 @@ public class TokenAuthLoginModule implements LoginModule {
         if (tokenStr == null) {
             tokenStr = TokenCache.readToken(tokenCacheName);
             if (tokenStr == null) {
-                throw new LoginException("No valid token was found in token cache: " + tokenCacheName);
+                throwWith("No valid token was found in token cache: " + tokenCacheName);
             }
         }
 
@@ -263,11 +262,13 @@ public class TokenAuthLoginModule implements LoginModule {
         // Sign the token.
         if (signKeyFile != null) {
             try {
-                TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
                 try {
-                    authToken = tokenDecoder.decodeFromString(tokenStr);
-                } catch (IOException e) {
-                    LOG.error("Token decode failed. " + e.toString());
+                    // Note no need to verify the token here since the KDC will verify it when we send it 
+                    // over. Just need to sign it and send it to KDC.
+                    JWT jwt = JWTParser.parse(tokenStr);
+                    authToken = new JwtAuthToken(jwt.getJWTClaimsSet());
+                } catch (ParseException e) {
+                    throw new RuntimeException("Failed to parse JWT token string", e);
                 }
                 TokenEncoder tokenEncoder = KrbRuntime.getTokenProvider("JWT").createTokenEncoder();
 
@@ -276,10 +277,20 @@ public class TokenAuthLoginModule implements LoginModule {
                     try (InputStream is = Files.newInputStream(signKeyFile.toPath())) {
                         signKey = PrivateKeyReader.loadPrivateKey(is);
                     } catch (IOException e) {
-                        LOG.error("Failed to load private key from file: "
-                                + signKeyFile.getName());
+                        throwWith("Failed to load private key from file: "
+                                + signKeyFile.getAbsolutePath(), e);
                     } catch (Exception e) {
-                        LOG.error(e.toString());
+                        throwWith("Failed to parse private key from file: "
+                                + signKeyFile.getAbsolutePath(), e);
+                    }
+
+                    if (signKey == null) {
+                        throwWith("Signing key file produced a null key: "
+                            + signKeyFile.getAbsolutePath());
+                    }
+                    if (!(signKey instanceof RSAPrivateKey)) {
+                        throwWith("Signing key is not an RSA private key: "
+                            + signKeyFile.getAbsolutePath());
                     }
 
                     ((JwtTokenEncoder) tokenEncoder).setSignKey((RSAPrivateKey) signKey);
@@ -372,5 +383,9 @@ public class TokenAuthLoginModule implements LoginModule {
         LoginException le = new LoginException(error);
         le.initCause(cause);
         throw le;
+    }
+
+    private void throwWith(String error) throws LoginException {
+        throw new LoginException(error);
     }
 }
