@@ -39,15 +39,31 @@ import javax.sql.rowset.serial.SerialBlob;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * A MySQL based backend implementation.
  */
 public class MySQLIdentityBackend extends AbstractIdentityBackend {
+    private static final Pattern SAFE_REALM_PATTERN = Pattern.compile("[a-z0-9_.-]{1,64}");
     private String keyInfoTable;
     private String identityTable;
     private static DruidDataSource dataSource = null;
     private static final Logger LOG = LoggerFactory.getLogger(MySQLIdentityBackend.class);
+
+    static String normalizeAndValidateRealmForTableName(String realm) throws KrbException {
+        if (realm == null) {
+            throw new KrbException("Invalid realm name in kdc_config: null");
+        }
+
+        String normalizedRealm = realm.toLowerCase(Locale.ROOT);
+        if (!SAFE_REALM_PATTERN.matcher(normalizedRealm).matches()) {
+            throw new KrbException("Invalid realm name in kdc_config.");
+        }
+
+        return normalizedRealm;
+    }
 
     /**
      * Constructing an instance using specified config that contains anything
@@ -142,7 +158,7 @@ public class MySQLIdentityBackend extends AbstractIdentityBackend {
                 preKdcRealm = connection.prepareStatement(stmKdcRealm);
                 resKdcRealm = preKdcRealm.executeQuery();
                 if (resKdcRealm.next()) {
-                    String realm = resKdcRealm.getString("realm").toLowerCase();
+                    String realm = normalizeAndValidateRealmForTableName(resKdcRealm.getString("realm"));
                     identityTable = "`" + realm + "_identity" + "`";
                     keyInfoTable = "`" + realm + "_key" + "`";
                 } else {
