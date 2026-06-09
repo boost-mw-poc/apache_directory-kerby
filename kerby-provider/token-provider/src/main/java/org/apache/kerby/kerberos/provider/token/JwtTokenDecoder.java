@@ -21,6 +21,7 @@ package org.apache.kerby.kerberos.provider.token;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEDecrypter;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
@@ -200,11 +201,31 @@ public class JwtTokenDecoder implements TokenDecoder {
      */
     public boolean verifySignedJWT(SignedJWT signedJWT) throws IOException {
         try {
+            if (!isAlgorithmCompatible(signedJWT)) {
+                return false;
+            }
             JWSVerifier verifier = getVerifier();
             return signedJWT.verify(verifier);
         } catch (JOSEException | KrbException e) {
             throw new IOException("Failed to verify the signed JWT", e);
         }
+    }
+
+    private boolean isAlgorithmCompatible(SignedJWT signedJWT) {
+        JWSAlgorithm algorithm = signedJWT.getHeader().getAlgorithm();
+        if (algorithm == null) {
+            return false;
+        }
+
+        if (verifyKey instanceof RSAPublicKey) {
+            return JWSAlgorithm.Family.RSA.contains(algorithm);
+        } else if (verifyKey instanceof ECPublicKey) {
+            return JWSAlgorithm.Family.EC.contains(algorithm);
+        } else if (verifyKey instanceof byte[]) {
+            return JWSAlgorithm.Family.HMAC_SHA.contains(algorithm);
+        }
+
+        return false;
     }
 
     private JWSVerifier getVerifier() throws JOSEException, KrbException {

@@ -27,6 +27,7 @@ import org.apache.kerby.kerberos.kerb.provider.TokenDecoder;
 import org.apache.kerby.kerberos.kerb.provider.TokenEncoder;
 import org.apache.kerby.kerberos.kerb.type.base.AuthToken;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +36,9 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -245,6 +249,112 @@ public class TokenTest {
     }
 
     @Test
+    public void testAlgorithmCompatibilityRsaVerifierAcceptsRsaSignature() throws Exception {
+        KeyPair rsaKeyPair = getKeyPair();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.RS256, rsaKeyPair.getPrivate());
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey((RSAPublicKey) rsaKeyPair.getPublic());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNotNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityRsaVerifierRejectsHmacSignature() throws Exception {
+        byte[] secretKey = generateHmacKey();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.HS256, secretKey);
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        KeyPair rsaKeyPair = getKeyPair();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey((RSAPublicKey) rsaKeyPair.getPublic());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityHmacVerifierAcceptsHmacSignature() throws Exception {
+        byte[] secretKey = generateHmacKey();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.HS256, secretKey);
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey(secretKey);
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNotNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityHmacVerifierRejectsRsaSignature() throws Exception {
+        KeyPair rsaKeyPair = getKeyPair();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.RS256, rsaKeyPair.getPrivate());
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey(generateHmacKey());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityEcVerifierAcceptsEcSignature() throws Exception {
+        Assumptions.assumeTrue(isEcSupported(), "EC algorithm not available in this runtime");
+
+        KeyPair ecKeyPair = getEcKeyPair();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.ES256, ecKeyPair.getPrivate());
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey((ECPublicKey) ecKeyPair.getPublic());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNotNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isTrue();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityEcVerifierRejectsHmacSignature() throws Exception {
+        Assumptions.assumeTrue(isEcSupported(), "EC algorithm not available in this runtime");
+
+        byte[] secretKey = generateHmacKey();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.HS256, secretKey);
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        KeyPair ecKeyPair = getEcKeyPair();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey((ECPublicKey) ecKeyPair.getPublic());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+    }
+
+    @Test
+    public void testAlgorithmCompatibilityHmacVerifierRejectsEcSignature() throws Exception {
+        Assumptions.assumeTrue(isEcSupported(), "EC algorithm not available in this runtime");
+
+        KeyPair ecKeyPair = getEcKeyPair();
+        String tokenStr = encodeSignedToken(authToken, JWSAlgorithm.ES256, ecKeyPair.getPrivate());
+
+        TokenDecoder tokenDecoder = KrbRuntime.getTokenProvider("JWT").createTokenDecoder();
+        ((JwtTokenDecoder) tokenDecoder).setVerifyKey(generateHmacKey());
+        setAudience((JwtTokenDecoder) tokenDecoder, auds);
+
+        AuthToken token2 = tokenDecoder.decodeFromString(tokenStr);
+        Assertions.assertThat(token2).isNull();
+        Assertions.assertThat(tokenDecoder.isSigned()).isFalse();
+    }
+
+    @Test
     @org.junit.jupiter.api.Disabled
     // TODO: building error with openjdk8: NoSuchAlgorithm EC KeyPairGenerato..
     public void testTokenWithECDSASignedJWT() throws Exception {
@@ -358,6 +468,51 @@ public class TokenTest {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
         return kpg.generateKeyPair();
+    }
+
+    private KeyPair getEcKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(256);
+        return kpg.generateKeyPair();
+    }
+
+    private boolean isEcSupported() {
+        try {
+            KeyPairGenerator.getInstance("EC");
+            return true;
+        } catch (NoSuchAlgorithmException ex) {
+            return false;
+        }
+    }
+
+    private byte[] generateHmacKey() throws NoSuchAlgorithmException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(256);
+        return keyGenerator.generateKey().getEncoded();
+    }
+
+    private String encodeSignedToken(AuthToken token, JWSAlgorithm algorithm, PrivateKey signKey) throws Exception {
+        TokenEncoder tokenEncoder = KrbRuntime.getTokenProvider("JWT").createTokenEncoder();
+        ((JwtTokenEncoder) tokenEncoder).setEncryptionMethod(encryptionMethod);
+        ((JwtTokenEncoder) tokenEncoder).setJwsAlgorithm(algorithm);
+
+        if (signKey instanceof RSAPrivateKey) {
+            ((JwtTokenEncoder) tokenEncoder).setSignKey((RSAPrivateKey) signKey);
+        } else if (signKey instanceof ECPrivateKey) {
+            ((JwtTokenEncoder) tokenEncoder).setSignKey(signKey);
+        } else {
+            throw new IllegalArgumentException("Unsupported private key type for test: " + signKey.getClass());
+        }
+
+        return tokenEncoder.encodeAsString(token);
+    }
+
+    private String encodeSignedToken(AuthToken token, JWSAlgorithm algorithm, byte[] signKey) throws Exception {
+        TokenEncoder tokenEncoder = KrbRuntime.getTokenProvider("JWT").createTokenEncoder();
+        ((JwtTokenEncoder) tokenEncoder).setEncryptionMethod(encryptionMethod);
+        ((JwtTokenEncoder) tokenEncoder).setSignKey(signKey);
+        ((JwtTokenEncoder) tokenEncoder).setJwsAlgorithm(algorithm);
+        return tokenEncoder.encodeAsString(token);
     }
 
     private void setSignKey(JwtTokenEncoder encoder, JwtTokenDecoder decoder) throws NoSuchAlgorithmException {
