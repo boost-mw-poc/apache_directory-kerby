@@ -52,11 +52,7 @@ public class XmlConfigLoader extends ConfigLoader {
 
         docBuilderFactory.setIgnoringComments(true);
         docBuilderFactory.setNamespaceAware(true);
-        try {
-            docBuilderFactory.setXIncludeAware(true);
-        } catch (UnsupportedOperationException e) {
-            LOGGER.error("Failed to set setXIncludeAware(true) for parser", e);
-        }
+        docBuilderFactory.setXIncludeAware(false);
         DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
         InputStream is = (InputStream) resource.getResource();
         Document doc = null;
