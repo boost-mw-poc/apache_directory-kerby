@@ -362,9 +362,13 @@ public class TokenAuthLoginModule implements LoginModule {
             throw new IOException("Failed to create tgtcache file "
                     + cCache.getAbsolutePath());
         }
-        cCache.setExecutable(false);
-        cCache.setReadable(true);
-        cCache.setWritable(true);
+        // Enforce owner-only access for credential cache contents.
+        if (!cCache.setReadable(false, false) || !cCache.setWritable(false, false)
+                || !cCache.setExecutable(false, false)
+                || !cCache.setReadable(true, true) || !cCache.setWritable(true, true)) {
+            throw new IOException("Failed to set secure permissions on tgtcache file "
+                    + cCache.getAbsolutePath());
+        }
         return cCache;
     }
 
