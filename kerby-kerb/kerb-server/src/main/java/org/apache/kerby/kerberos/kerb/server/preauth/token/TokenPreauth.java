@@ -153,6 +153,10 @@ public class TokenPreauth extends AbstractPreauthPlugin {
         }
     }
 
+    /**
+     * Get the key file stream based on the configured path and issuer name. If the path is a directory, 
+     * it will look for a file that matches the issuer name or issuer name with .pem extension.
+     */
     private InputStream getKeyFileStream(String path, String issuer) throws IOException {
         File file = new File(path);
         if (file.isDirectory()) {
@@ -162,15 +166,28 @@ public class TokenPreauth extends AbstractPreauthPlugin {
             if (listOfFiles == null) {
                 throw new FileNotFoundException("The key path is incorrect");
             }
+
+            String pemName = issuer + ".pem";
+            String publicPemName = issuer + "_public_key.pem";
+            int matchCount = 0;
+
             for (File f : listOfFiles) {
-                if (f.isFile() && f.getName().contains(issuer)) {
+                if (f.isFile() && (f.getName().equals(issuer) || f.getName().equals(pemName) 
+                    || f.getName().equals(publicPemName))) {
                     verifyKeyFile = f;
-                    break;
+                    matchCount++;
                 }
             }
-            if (verifyKeyFile == null) {
+
+            if (matchCount == 0) {
                 throw new FileNotFoundException("No key found that matches the issuer name");
             }
+            if (matchCount > 1) {
+                throw new FileNotFoundException(
+                    "Multiple key files match issuer '" + issuer + "'. Keep only one of: "
+                        + issuer + " or " + pemName + " or " + publicPemName + " in the directory.");
+            }
+
             return Files.newInputStream(verifyKeyFile.toPath());
         } else if (file.isFile()) {
             return Files.newInputStream(file.toPath());
