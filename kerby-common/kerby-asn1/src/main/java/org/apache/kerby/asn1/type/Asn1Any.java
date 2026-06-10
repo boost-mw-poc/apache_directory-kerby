@@ -151,13 +151,22 @@ public class Asn1Any
     private void blindlyDecode() throws IOException {
         Asn1Type anyValue = Asn1Converter.convert(parseResult, false);
         if (decodeInfo != null && decodeInfo.isTagged()) {
-            // Escape the wrapper
+            // Escape the wrapper, filtering out EOC markers from indefinite-length encoding
             Asn1Constructed constructed = (Asn1Constructed) anyValue;
-            if (constructed.getValue().size() != 1) {
-                throw new IOException("Tagged ANY value must contain exactly one inner value, but got "
-                    + constructed.getValue().size());
+            int nonEocCount = 0;
+            Asn1Type innerValue = null;
+            for (Asn1Type item : constructed.getValue()) {
+                if (!(item instanceof Asn1Eoc)) {
+                    nonEocCount++;
+                    if (innerValue == null) {
+                        innerValue = item;
+                    }
+                }
             }
-            Asn1Type innerValue = constructed.getValue().get(0);
+            if (nonEocCount != 1) {
+                throw new IOException("Tagged ANY value must contain exactly one inner value, but got "
+                    + nonEocCount);
+            }
             setValue(innerValue);
         } else {
             setValue(anyValue);

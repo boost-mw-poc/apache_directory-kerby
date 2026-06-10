@@ -296,11 +296,22 @@ public abstract class Asn1Encodeable extends Asn1Object implements Asn1Type {
 
             Asn1Container container = (Asn1Container) parseResult;
             List<Asn1ParseResult> children = container.getChildren();
-            if (children.size() != 1) {
-                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
-                    + children.size());
+            // Filter out EOC markers (used for indefinite-length encoding)
+            int nonEocCount = 0;
+            Asn1ParseResult innerValue = null;
+            for (Asn1ParseResult child : children) {
+                if (!child.isEOC()) {
+                    nonEocCount++;
+                    if (innerValue == null) {
+                        innerValue = child;
+                    }
+                }
             }
-            tmpParseResult = children.get(0);
+            if (nonEocCount != 1) {
+                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
+                    + nonEocCount);
+            }
+            tmpParseResult = innerValue;
             
             decode(tmpParseResult);
         }

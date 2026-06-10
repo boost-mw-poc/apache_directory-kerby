@@ -90,11 +90,21 @@ public class Asn1Tagging<T extends Asn1Type>
         } else {
             Asn1Container container = (Asn1Container) parseResult;
             List<Asn1ParseResult> children = container.getChildren();
-            if (children.size() != 1) {
-                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
-                    + children.size());
+            // Filter out EOC markers (used for indefinite-length encoding)
+            int nonEocCount = 0;
+            Asn1ParseResult body = null;
+            for (Asn1ParseResult child : children) {
+                if (!child.isEOC()) {
+                    nonEocCount++;
+                    if (body == null) {
+                        body = child;
+                    }
+                }
             }
-            Asn1ParseResult body = children.get(0);
+            if (nonEocCount != 1) {
+                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
+                    + nonEocCount);
+            }
             value.decode(body);
         }
     }
