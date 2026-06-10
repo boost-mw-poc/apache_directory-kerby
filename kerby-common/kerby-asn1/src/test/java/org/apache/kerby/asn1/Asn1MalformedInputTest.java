@@ -19,6 +19,8 @@
  */
 package org.apache.kerby.asn1;
 
+import org.apache.kerby.asn1.type.Asn1Any;
+import org.apache.kerby.asn1.type.Asn1Integer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -151,6 +153,56 @@ public class Asn1MalformedInputTest {
 
         assertThatThrownBy(() -> Asn1.parse(definiteWithEarlyEoc))
             .isInstanceOf(IOException.class);
+    }
+
+    @Test
+    public void testTaggedDecodeExplicitWrapperWithoutInnerValueShouldThrowIoException() {
+        byte[] emptyExplicitWrapper = new byte[] {
+            (byte) 0xA0, 0x00
+        };
+
+        Asn1Integer value = new Asn1Integer();
+        TaggingOption taggingOption = TaggingOption.newExplicitContextSpecific(0);
+
+        assertThatThrownBy(() -> value.taggedDecode(emptyExplicitWrapper, taggingOption))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("exactly one inner value");
+    }
+
+    @Test
+    public void testTaggedAnyDecodeExplicitWrapperWithMultipleInnerValuesShouldThrowIoException() {
+        byte[] multipleInnerValues = new byte[] {
+            (byte) 0xA0, 0x06,
+            0x02, 0x01, 0x01,
+            0x02, 0x01, 0x02
+        };
+
+        Asn1Any any = new Asn1Any();
+        any.setDecodeInfo(new Asn1FieldInfo(TestFields.F0, 0, Asn1Any.class, false));
+
+        assertThatThrownBy(() -> any.decode(multipleInnerValues))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("exactly one inner value");
+    }
+
+    private enum TestFields implements EnumType {
+        F0(0);
+
+        private final int value;
+
+        TestFields(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public int getValue() {
+            return value;
+        }
+
+        @Override
+        public String getName() {
+            return name();
+        }
     }
 
     private static byte[] buildDeeplyNestedIndefiniteSequence(int depth) {

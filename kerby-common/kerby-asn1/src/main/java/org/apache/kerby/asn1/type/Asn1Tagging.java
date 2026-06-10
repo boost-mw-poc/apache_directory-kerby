@@ -28,6 +28,7 @@ import org.apache.kerby.asn1.parse.Asn1ParseResult;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * For tagging any Asn1Type with a tagNo
@@ -88,7 +89,12 @@ public class Asn1Tagging<T extends Asn1Type>
             value.decodeBody(parseResult);
         } else {
             Asn1Container container = (Asn1Container) parseResult;
-            Asn1ParseResult body = container.getChildren().get(0);
+            List<Asn1ParseResult> children = container.getChildren();
+            if (children.size() != 1) {
+                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
+                    + children.size());
+            }
+            Asn1ParseResult body = children.get(0);
             value.decode(body);
         }
     }

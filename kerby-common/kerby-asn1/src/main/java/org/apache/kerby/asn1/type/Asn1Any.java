@@ -153,6 +153,10 @@ public class Asn1Any
         if (decodeInfo != null && decodeInfo.isTagged()) {
             // Escape the wrapper
             Asn1Constructed constructed = (Asn1Constructed) anyValue;
+            if (constructed.getValue().size() != 1) {
+                throw new IOException("Tagged ANY value must contain exactly one inner value, but got "
+                    + constructed.getValue().size());
+            }
             Asn1Type innerValue = constructed.getValue().get(0);
             setValue(innerValue);
         } else {

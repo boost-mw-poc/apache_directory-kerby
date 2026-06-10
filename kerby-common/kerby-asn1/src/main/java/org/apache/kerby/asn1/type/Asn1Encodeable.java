@@ -30,6 +30,7 @@ import org.apache.kerby.asn1.util.Asn1Util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * The abstract ASN1 object for all the ASN1 types. It provides basic
@@ -294,7 +295,12 @@ public abstract class Asn1Encodeable extends Asn1Object implements Asn1Type {
         } else {
 
             Asn1Container container = (Asn1Container) parseResult;
-            tmpParseResult = container.getChildren().get(0);
+            List<Asn1ParseResult> children = container.getChildren();
+            if (children.size() != 1) {
+                throw new IOException("Explicitly tagged value must contain exactly one inner value, but got "
+                    + children.size());
+            }
+            tmpParseResult = children.get(0);
             
             decode(tmpParseResult);
         }
