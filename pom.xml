@@ -139,6 +139,7 @@
               <exclude>**/licenses/**</exclude>
               <!-- HAS patches -->
               <exclude>**/*.patch</exclude>
+              <exclude>SECURITY.md</exclude>
             </excludes>
           </configuration>
         </plugin>
